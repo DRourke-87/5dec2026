@@ -1430,6 +1430,7 @@
     let zTick = 0;
     let riffleTimer = null;
     let newEntryTarget = null;
+    const COVER_PAUSE = 2200;   // ms on the closed cover before it swings open
 
     const make = (tag, cls, text) => {
       const n = document.createElement(tag);
@@ -1664,12 +1665,13 @@
       void bookEl.offsetWidth;
       bookEl.classList.add('is-entering');
 
+      // Rest on the cover long enough to read it before it opens (a tap opens it sooner)
       const target = toNewEntry && newEntryTarget != null ? newEntryTarget : 1;
       riffleTimer = setTimeout(() => riffleTo(target, () => {
         if (!toNewEntry) return;
         // ink the new signature once its page has landed
         setTimeout(() => bookEl.querySelectorAll('.entry.is-new').forEach(n => n.classList.add('is-writing')), 900);
-      }), 750);
+      }), COVER_PAUSE);
     }
 
     document.getElementById('gb-view').addEventListener('click', () => openBook(false));
