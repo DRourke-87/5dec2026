@@ -223,17 +223,15 @@
       margin: 0 0 48px;
     }
 
-    .masonry {
-      column-count: 3;
-      column-gap: 20px;
+    /* Justified grid: tiles are positioned by layoutGrid() in the script */
+    .tiles {
+      position: relative;
     }
 
-    .masonry__item {
-      break-inside: avoid;
-      -webkit-column-break-inside: avoid;
-      margin: 0 0 20px;
+    .tiles__item {
+      position: absolute;
+      margin: 0;
       overflow: hidden;
-      border: 1px solid var(--line);
       background: rgba(255, 255, 255, 0.04);
       cursor: pointer;
       opacity: 0;
@@ -245,28 +243,29 @@
       to   { opacity: 1; transform: none; }
     }
 
-    .masonry__item img {
+    .tiles__item img {
       display: block;
       width: 100%;
-      height: auto;
+      height: 100%;
+      object-fit: cover;
       filter: grayscale(100%) contrast(110%);
       transition: all 0.5s ease;
     }
 
     @media (hover: hover) {
-      .masonry__item:hover img {
+      .tiles__item:hover img {
         transform: scale(1.03);
         filter: grayscale(0%);
       }
     }
 
-    .masonry__item.is-revealed img,
-    .masonry__item:focus-visible img {
+    .tiles__item.is-revealed img,
+    .tiles__item:focus-visible img {
       transform: scale(1.03);
       filter: grayscale(0%);
     }
 
-    .masonry__item:focus-visible { outline: 1px solid rgba(255, 255, 255, 0.6); outline-offset: 3px; }
+    .tiles__item:focus-visible { outline: 1px solid rgba(255, 255, 255, 0.6); outline-offset: 3px; }
 
     .gallery__empty {
       text-align: center;
@@ -289,11 +288,6 @@
     }
 
     /* ── Responsive ────────────────────────────────────── */
-    @media (max-width: 960px) {
-      .masonry { column-count: 2; column-gap: 16px; }
-      .masonry__item { margin-bottom: 16px; }
-    }
-
     @media (max-width: 600px) {
       .page { padding-left: 16px; padding-right: 16px; }
       .invite { padding-top: 40px; padding-bottom: 56px; }
@@ -301,28 +295,13 @@
       .date { margin-top: 36px; }
       .venue { letter-spacing: 0.18em; }
 
-      /* Instagram-style: edge-to-edge, 3 square tiles per row */
-      .masonry {
-        column-count: initial;
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 2px;
-        margin: 0 -16px;
-      }
-      .masonry__item {
-        margin: 0;
-        border: 0;
-        aspect-ratio: 1 / 1;
-      }
-      .masonry__item img {
-        height: 100%;
-        object-fit: cover;
-      }
+      /* Edge-to-edge gallery on phones */
+      .tiles { margin: 0 -16px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .masonry__item, .upload__status.is-pulsing { animation: none; opacity: 1; }
-      .masonry__item img { transition: none; }
+      .tiles__item, .upload__status.is-pulsing { animation: none; opacity: 1; }
+      .tiles__item img { transition: none; }
     }
   </style>
 </head>
@@ -362,7 +341,7 @@
   <section class="gallery page" aria-labelledby="gallery-title">
     <h2 class="gallery__title" id="gallery-title">The Shared Gallery</h2>
     <p class="gallery__sub">Moments captured by our guests</p>
-    <div class="masonry" id="grid"></div>
+    <div class="tiles" id="grid"></div>
     <p class="gallery__empty" id="empty" hidden>The first memory is waiting to be shared.</p>
   </section>
 
@@ -392,7 +371,7 @@
     const grid     = document.getElementById('grid');
     const emptyEl  = document.getElementById('empty');
 
-    const rendered = new Set();   // public_ids already in the grid
+    const tiles = new Map();      // public_id -> { el, ar } for every tile in the grid
     let known = [];               // all resources, newest first
 
     const isConfigured = !CLOUD_NAME.startsWith('YOUR_') && !UPLOAD_PRESET.startsWith('YOUR_');
@@ -409,7 +388,7 @@
 
     function buildItem(r) {
       const figure = document.createElement('figure');
-      figure.className = 'masonry__item';
+      figure.className = 'tiles__item';
       figure.tabIndex = 0;
 
       const img = document.createElement('img');
@@ -417,35 +396,99 @@
       img.alt = 'A guest photo from the wedding';
       img.loading = 'lazy';
       img.decoding = 'async';
-      if (r.width && r.height) {
-        // reserve space so columns don't jump while images load
-        img.width = 600;
-        img.height = Math.round(600 * r.height / r.width);
+      const tile = { el: figure, ar: r.width && r.height ? r.width / r.height : 0 };
+      if (!tile.ar) {
+        // Dimensions unknown until the image arrives: assume square, then re-tile
+        tile.ar = 1;
+        img.addEventListener('load', () => {
+          if (img.naturalWidth && img.naturalHeight) {
+            tile.ar = img.naturalWidth / img.naturalHeight;
+            layoutGrid();
+          }
+        }, { once: true });
       }
 
       figure.appendChild(img);
-      return figure;
+      return tile;
     }
 
-    // Merge new resources and re-render only if order changed.
+    /* Justified layout: fill each row edge to edge, keeping every photo's
+       own shape. Rows aim for about three photos (fewer for wide shots,
+       more for tall ones); the row height that lands closest to the target
+       decides where each row breaks. */
+    function layoutGrid() {
+      const W = grid.clientWidth;
+      if (!W || !known.length) { grid.style.height = '0px'; return; }
+
+      const gap = W < 600 ? 3 : 8;
+      const target = Math.min((W - 2 * gap) / 3, 360);
+      const items = known.map(r => tiles.get(r.public_id)).filter(Boolean);
+
+      const rows = [];
+      let row = [], sum = 0;
+      const heightFor = (n, s) => (W - gap * (n - 1)) / s;
+
+      for (const t of items) {
+        row.push(t);
+        sum += t.ar;
+        const h = heightFor(row.length, sum);
+        if (h > target) continue;               // row still too tall: keep adding
+
+        if (row.length > 1) {
+          const hWithout = heightFor(row.length - 1, sum - t.ar);
+          if (Math.abs(Math.log(hWithout / target)) < Math.abs(Math.log(h / target))) {
+            row.pop();
+            rows.push({ items: row, h: hWithout, full: true });
+            row = [t]; sum = t.ar;
+            const hAlone = heightFor(1, sum);
+            if (hAlone <= target) { rows.push({ items: row, h: hAlone, full: true }); row = []; sum = 0; }
+            continue;
+          }
+        }
+        rows.push({ items: row, h, full: true });
+        row = []; sum = 0;
+      }
+      // Last, unfilled row: keep the target height rather than stretching
+      if (row.length) rows.push({ items: row, h: Math.min(target, heightFor(row.length, sum)), full: false });
+
+      let y = 0;
+      for (const { items: rowItems, h, full } of rows) {
+        // centre the last, unfilled row
+        const rowWidth = rowItems.reduce((w, t) => w + t.ar * h, 0) + gap * (rowItems.length - 1);
+        let x = full ? 0 : Math.max(0, (W - rowWidth) / 2);
+        rowItems.forEach((t, i) => {
+          // the final tile in a full row absorbs rounding so edges line up
+          const w = full && i === rowItems.length - 1 ? W - x : t.ar * h;
+          Object.assign(t.el.style, {
+            left: `${x}px`, top: `${y}px`, width: `${w}px`, height: `${h}px`
+          });
+          x += w + gap;
+        });
+        y += h + gap;
+      }
+      grid.style.height = `${Math.max(0, y - gap)}px`;
+    }
+
+    let lastWidth = 0;
+    new ResizeObserver(() => {
+      if (grid.clientWidth !== lastWidth) { lastWidth = grid.clientWidth; layoutGrid(); }
+    }).observe(grid);
+
+    // Merge new resources, add tiles for any new ones, then re-tile.
     function render(resources) {
       const byId = new Map(known.map(r => [r.public_id, r]));
       resources.forEach(r => byId.set(r.public_id, r));
       known = [...byId.values()].sort((a, b) =>
         new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
-      const fresh = known.filter(r => !rendered.has(r.public_id));
-      if (fresh.length) {
-        // Newest first: prepend fresh ones in order at the top of the grid.
-        const frag = document.createDocumentFragment();
-        known.forEach(r => {
-          if (!rendered.has(r.public_id)) {
-            frag.appendChild(buildItem(r));
-            rendered.add(r.public_id);
-          }
-        });
-        grid.prepend(frag);
-      }
+      known.forEach(r => {
+        if (!tiles.has(r.public_id)) {
+          const tile = buildItem(r);
+          tiles.set(r.public_id, tile);
+          grid.appendChild(tile.el);   // DOM order doesn't matter; layoutGrid() places it
+        }
+      });
+      layoutGrid();
       emptyEl.hidden = known.length > 0;
     }
 
@@ -571,7 +614,7 @@
 
     // Tap to reveal colour (touch devices); one image revealed at a time
     grid.addEventListener('click', e => {
-      const item = e.target.closest('.masonry__item');
+      const item = e.target.closest('.tiles__item');
       if (!item) return;
       const wasOpen = item.classList.contains('is-revealed');
       grid.querySelectorAll('.is-revealed').forEach(el => el.classList.remove('is-revealed'));
