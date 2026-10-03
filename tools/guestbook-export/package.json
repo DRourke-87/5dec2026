@@ -1,0 +1,12 @@
+{
+  "name": "guestbook-export",
+  "private": true,
+  "type": "module",
+  "description": "Export the wedding guestbook from Cloudinary as a print-ready PDF",
+  "scripts": {
+    "export": "node export.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.56.1"
+  }
+}

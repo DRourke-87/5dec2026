@@ -1,0 +1,61 @@
+name: Export guestbook
+
+# Run by hand from the Actions tab: builds print-ready PDFs of the guestbook
+# from Cloudinary and attaches them to the run as a downloadable zip.
+on:
+  workflow_dispatch:
+    inputs:
+      size:
+        description: Trim size (or e.g. 150x200mm)
+        type: string
+        default: a5
+      bleed:
+        description: Bleed in mm on every edge (3 for most printers, 0 for home printing)
+        type: string
+        default: '3'
+      paper:
+        description: Page colour
+        type: choice
+        options: [white, cream]
+        default: white
+      order:
+        description: Order of signatures
+        type: choice
+        options: [oldest, newest]
+        default: oldest
+      multiple:
+        description: Pad the page count to a multiple of (2 or 4, check your printer)
+        type: string
+        default: '2'
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/guestbook-export
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/guestbook-export/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Build PDFs
+        env:
+          SIZE: ${{ inputs.size }}
+          BLEED: ${{ inputs.bleed }}
+          PAPER: ${{ inputs.paper }}
+          ORDER: ${{ inputs.order }}
+          MULTIPLE: ${{ inputs.multiple }}
+        run: node export.mjs --size "$SIZE" --bleed "$BLEED" --paper "$PAPER" --order "$ORDER" --multiple "$MULTIPLE"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: guestbook-${{ inputs.size }}-${{ inputs.paper }}
+          path: tools/guestbook-export/out
+          retention-days: 30
