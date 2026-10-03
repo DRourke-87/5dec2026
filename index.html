@@ -300,7 +300,24 @@
       .names { width: 240px; }
       .date { margin-top: 36px; }
       .venue { letter-spacing: 0.18em; }
-      .masonry { column-count: 1; }
+
+      /* Instagram-style: edge-to-edge, 3 square tiles per row */
+      .masonry {
+        column-count: initial;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2px;
+        margin: 0 -16px;
+      }
+      .masonry__item {
+        margin: 0;
+        border: 0;
+        aspect-ratio: 1 / 1;
+      }
+      .masonry__item img {
+        height: 100%;
+        object-fit: cover;
+      }
     }
 
     @media (prefers-reduced-motion: reduce) {
