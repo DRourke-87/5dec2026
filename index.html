@@ -73,7 +73,7 @@
       display: flex;
       align-items: flex-end;
       justify-content: center;
-      gap: 0.18em;
+      gap: 0.26em;
       font-family: var(--serif);
       font-weight: 700;
       font-size: clamp(3.4rem, 9vw, 5.6rem);
@@ -83,12 +83,13 @@
       font-variant-numeric: lining-nums;
     }
 
+    /* Divider spans exactly the height of the figures (measured for Playfair Display) */
     .date .bar {
       display: block;
+      align-self: stretch;
       width: 1px;
-      height: 0.5em;
+      margin: 0.147em 0 0.08em;
       background: var(--white);
-      transform: translateY(0.14em);
     }
 
     .venue {
