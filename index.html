@@ -4,22 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Faron &amp; Darren · 05 | 12 | 26</title>
-  <meta name="description" content="Share your photos from the wedding of Faron &amp; Darren at Abbey House Hotel &amp; Gardens.">
-  <meta name="theme-color" content="#1e1e20">
+  <meta name="description" content="Faron &amp; Darren invite you to celebrate their wedding at Abbey House Hotel &amp; Gardens — share your photos from the day.">
+  <meta name="theme-color" content="#323232">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Mrs+Saint+Delafield&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,500&family=Open+Sans:wght@300;400&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --bg: #1e1e20;
+      --bg: #323232;
       --white: #ffffff;
       --muted: #b5b5b7;
       --line: rgba(255, 255, 255, 0.2);
-      --script: 'Mrs Saint Delafield', cursive;
+      --rule: rgba(255, 255, 255, 0.85);
       --serif: 'Playfair Display', Georgia, serif;
-      --sans: 'Lato', 'Helvetica Neue', Arial, sans-serif;
+      --sans: 'Open Sans', 'Helvetica Neue', Arial, sans-serif;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
@@ -33,99 +33,191 @@
 
     body {
       font-family: var(--sans);
-      font-weight: 300;
+      font-weight: 400;
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       -webkit-tap-highlight-color: transparent;
     }
 
-    section, header, footer { background: var(--bg); }
+    section, header, footer, aside { background: var(--bg); }
+
+    img { max-width: 100%; height: auto; }
 
     .page {
-      max-width: 1180px;
+      max-width: 1320px;
       margin: 0 auto;
-      padding: 0 24px;
+      padding-left: 24px;
+      padding-right: 24px;
     }
 
-    /* ── Header ─────────────────────────────────────────── */
+    /* Hand-lettered headings, lifted from the printed invite */
+    .script {
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* ── Invite: three panels, as printed ──────────────── */
     .invite {
-      text-align: center;
-      padding-top: 88px;
-      padding-bottom: 56px;
+      display: grid;
+      grid-template-columns: 1fr 1.45fr 1fr;
+      padding-top: 56px;
+      padding-bottom: 72px;
     }
 
-    .invite__eyebrow {
-      font-family: var(--serif);
+    .panel { padding: 0 36px; }
+    .panel--centre {
+      border-left: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .panel--side { text-align: center; }
+
+    .block + .block { margin-top: 64px; }
+
+    .block h2 {
+      margin: 0 0 24px;
+      font-size: 0; /* heading text lives in the image's alt */
+    }
+
+    .prose {
+      font-size: 0.98rem;
+      letter-spacing: 0.06em;
+      line-height: 1.75;
+      margin: 0;
+    }
+    .prose + .prose { margin-top: 1.4em; }
+
+    /* Centre panel */
+    .names { margin-top: 4px; }
+
+    .invite-line {
+      font-family: var(--sans);
+      font-weight: 300;
       font-size: 0.72rem;
-      letter-spacing: 0.42em;
+      letter-spacing: 0.22em;
       text-transform: uppercase;
       color: var(--muted);
-      margin: 0 0 28px;
+      margin: 28px 0 0;
+      line-height: 1.9;
     }
 
-    .invite__names {
-      font-family: var(--script);
-      font-weight: 400;
-      font-size: clamp(4rem, 13vw, 8.5rem);
-      line-height: 1;
-      margin: 0;
-      color: var(--white);
-      letter-spacing: 0.01em;
-    }
-
-    .invite__rule {
-      width: min(320px, 70%);
-      height: 0;
-      border: 0;
-      border-top: 1px solid var(--line);
-      margin: 40px auto 32px;
-    }
-
-    .invite__date {
+    .date {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 0.18em;
       font-family: var(--serif);
-      font-size: clamp(1.5rem, 4vw, 2.1rem);
-      font-weight: 400;
-      letter-spacing: 0.32em;
-      margin: 0 0 18px;
-      padding-left: 0.32em; /* optically re-centre tracked text */
-      color: var(--white);
+      font-weight: 700;
+      font-size: clamp(3.4rem, 6.2vw, 5.6rem);
+      line-height: 1;
+      letter-spacing: 0.02em;
+      margin: 72px 0 0;
       font-variant-numeric: lining-nums;
     }
 
-    .invite__date .bar {
-      color: var(--line);
-      font-weight: 300;
+    .date .bar {
+      display: block;
+      width: 1px;
+      height: 0.5em;
+      background: var(--white);
+      transform: translateY(0.14em);
     }
 
-    .invite__venue {
+    .venue {
       font-family: var(--sans);
-      font-size: 0.7rem;
-      font-weight: 400;
-      letter-spacing: 0.36em;
+      font-weight: 300;
+      font-size: clamp(0.95rem, 1.3vw, 1.15rem);
+      letter-spacing: 0.24em;
       text-transform: uppercase;
-      color: var(--muted);
-      margin: 0;
-      padding-left: 0.36em;
+      margin: 44px 0 0;
+      line-height: 1.4;
     }
+
+    .address {
+      display: inline-block;
+      font-size: clamp(0.9rem, 1.15vw, 1.02rem);
+      letter-spacing: 0.12em;
+      color: var(--white);
+      text-decoration: none;
+      margin-top: 6px;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.3s ease;
+    }
+    .address:hover { border-bottom-color: var(--line); }
+
+    .arrive {
+      font-weight: 300;
+      font-size: clamp(1rem, 1.5vw, 1.2rem);
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      margin: 36px 0 0;
+    }
+
+    /* Timeline */
+    .timeline {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      text-align: left;
+    }
+
+    .timeline li {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      align-items: stretch;
+    }
+
+    .timeline__icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 12px 14px 0;
+    }
+
+    .timeline__icon img { max-height: 112px; width: auto; }
+
+    .timeline__text {
+      border-left: 1px solid var(--rule);
+      padding: 14px 0 26px 18px;
+      margin: 8px 0;
+    }
+
+    .timeline__event {
+      display: block;
+      font-size: 1rem;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      line-height: 1.5;
+    }
+
+    .timeline__time {
+      display: block;
+      font-size: 0.78rem;
+      letter-spacing: 0.2em;
+      margin-top: 6px;
+    }
+
+    .closing { margin-top: 48px; }
 
     /* ── Upload zone ───────────────────────────────────── */
     .upload {
-      padding-top: 24px;
-      padding-bottom: 72px;
+      width: 100%;
+      max-width: 420px;
+      margin-top: 56px;
     }
 
     .upload__card {
       position: relative;
-      max-width: 460px;
-      margin: 0 auto;
-      padding: 52px 32px 40px;
+      padding: 44px 28px 34px;
       border: 1px solid var(--line);
       text-align: center;
       transition: border-color 0.4s ease;
     }
 
-    /* inner hairline frame, like a printed card */
     .upload__card::before {
       content: '';
       position: absolute;
@@ -141,9 +233,9 @@
 
     .upload__icon {
       display: block;
-      width: 52px;
-      height: 52px;
-      margin: 0 auto 26px;
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 22px;
       color: var(--white);
       opacity: 0.9;
     }
@@ -153,7 +245,7 @@
       font-style: italic;
       font-size: 0.95rem;
       color: var(--muted);
-      margin: 0 0 22px;
+      margin: 0 0 20px;
     }
 
     .upload__input {
@@ -169,7 +261,6 @@
       display: inline-block;
       font-family: var(--sans);
       font-size: 0.78rem;
-      font-weight: 400;
       letter-spacing: 0.24em;
       text-transform: uppercase;
       color: var(--white);
@@ -196,12 +287,11 @@
 
     .upload__status {
       min-height: 1.6em;
-      margin: 22px 0 0;
+      margin: 20px 0 0;
       font-family: var(--serif);
       font-style: italic;
       font-size: 0.88rem;
       color: var(--muted);
-      transition: opacity 0.4s ease;
     }
 
     .upload__status.is-pulsing { animation: breathe 1.8s ease-in-out infinite; }
@@ -225,7 +315,6 @@
       font-size: clamp(1.6rem, 4vw, 2.2rem);
       text-align: center;
       margin: 0 0 12px;
-      color: var(--white);
     }
 
     .gallery__sub {
@@ -242,30 +331,17 @@
       column-gap: 20px;
     }
 
-    @media (max-width: 960px) {
-      .masonry { column-count: 2; column-gap: 16px; }
-    }
-
-    @media (max-width: 600px) {
-      .masonry { column-count: 1; }
-      .invite { padding-top: 64px; padding-bottom: 44px; }
-      .page { padding-left: 16px; padding-right: 16px; }
-      .upload__card { padding: 44px 22px 34px; }
-    }
-
     .masonry__item {
       break-inside: avoid;
       -webkit-column-break-inside: avoid;
       margin: 0 0 20px;
       overflow: hidden;
       border: 1px solid var(--line);
-      background: #232326;
+      background: rgba(255, 255, 255, 0.04);
       cursor: pointer;
       opacity: 0;
       animation: rise 0.8s ease forwards;
     }
-
-    @media (max-width: 960px) { .masonry__item { margin-bottom: 16px; } }
 
     @keyframes rise {
       from { opacity: 0; transform: translateY(12px); }
@@ -306,17 +382,51 @@
     /* ── Footer ────────────────────────────────────────── */
     .colophon {
       border-top: 1px solid var(--line);
-      padding-top: 36px;
-      padding-bottom: 48px;
+      padding-top: 32px;
+      padding-bottom: 40px;
       text-align: center;
+      font-size: 0.68rem;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--muted);
     }
 
-    .colophon p {
-      font-family: var(--script);
-      font-size: 2.2rem;
-      color: var(--muted);
-      margin: 0;
-      line-height: 1;
+    /* ── Responsive ────────────────────────────────────── */
+    @media (max-width: 1100px) {
+      /* Two rows: the centre panel on top, the details side by side below */
+      .invite { grid-template-columns: 1fr 1fr; }
+      .panel--centre {
+        grid-column: 1 / -1;
+        order: -1;
+        border: 0;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 64px;
+        margin-bottom: 64px;
+      }
+      .panel--left { border-right: 1px solid var(--line); }
+      .masonry { column-count: 2; column-gap: 16px; }
+      .masonry__item { margin-bottom: 16px; }
+    }
+
+    @media (max-width: 680px) {
+      .page { padding-left: 16px; padding-right: 16px; }
+      .invite { grid-template-columns: 1fr; padding-top: 40px; }
+      .panel { padding: 0; }
+      .panel--centre { padding-bottom: 56px; margin-bottom: 56px; }
+      .panel--left {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 56px;
+        margin-bottom: 56px;
+      }
+      .names { width: 250px; }
+      .date { margin-top: 48px; }
+      .timeline { max-width: 360px; margin: 0 auto; }
+      .timeline li { grid-template-columns: 92px 1fr; }
+      .timeline__icon img { max-height: 88px; }
+      .timeline__event { font-size: 0.9rem; letter-spacing: 0.2em; }
+      .prose { font-size: 0.94rem; letter-spacing: 0.04em; }
+      .masonry { column-count: 1; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -327,32 +437,110 @@
 </head>
 <body>
 
-  <header class="invite page">
-    <p class="invite__eyebrow">Together with their families</p>
-    <h1 class="invite__names">Faron &amp; Darren</h1>
-    <hr class="invite__rule">
-    <p class="invite__date" aria-label="5 December 2026">05 <span class="bar">|</span> 12 <span class="bar">|</span> 26</p>
-    <p class="invite__venue">Abbey House Hotel &amp; Gardens</p>
-  </header>
+  <main class="invite page">
 
-  <section class="upload page" aria-labelledby="upload-label">
-    <div class="upload__card" id="dropzone">
-      <svg class="upload__icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M6 15.5h8.5l3.2-4.5h12.6l3.2 4.5H42a1.5 1.5 0 0 1 1.5 1.5v20A1.5 1.5 0 0 1 42 38.5H6A1.5 1.5 0 0 1 4.5 37V17A1.5 1.5 0 0 1 6 15.5Z"/>
-        <circle cx="24" cy="26.5" r="7.5"/>
-        <circle cx="24" cy="26.5" r="4"/>
-        <path d="M9 20.5h3.5"/>
-        <path d="M37.5 20.5h.01"/>
-      </svg>
+    <!-- Left panel: Timeline & Gifts -->
+    <aside class="panel panel--side panel--left">
+      <section class="block" aria-labelledby="h-timeline">
+        <h2 id="h-timeline"><img class="script" src="assets/timeline.png" width="216" height="86" alt="Timeline"></h2>
+        <ol class="timeline">
+          <li>
+            <span class="timeline__icon"><img src="assets/icon-bar.png" width="70" height="120" alt=""></span>
+            <span class="timeline__text"><span class="timeline__event">Bar opens</span><span class="timeline__time">2:00PM</span></span>
+          </li>
+          <li>
+            <span class="timeline__icon"><img src="assets/icon-rings.png" width="107" height="86" alt=""></span>
+            <span class="timeline__text"><span class="timeline__event">Ceremony</span><span class="timeline__time">3:00PM</span></span>
+          </li>
+          <li>
+            <span class="timeline__icon"><img src="assets/icon-drinks.png" width="105" height="117" alt=""></span>
+            <span class="timeline__text"><span class="timeline__event">Drinks reception &amp; canapés</span><span class="timeline__time">3:30PM</span></span>
+          </li>
+          <li>
+            <span class="timeline__icon"><img src="assets/icon-evening.png" width="74" height="104" alt=""></span>
+            <span class="timeline__text"><span class="timeline__event">Evening celebrations</span><span class="timeline__time">5:30PM</span></span>
+          </li>
+          <li>
+            <span class="timeline__icon"><img src="assets/icon-food.png" width="105" height="100" alt=""></span>
+            <span class="timeline__text"><span class="timeline__event">Street food</span><span class="timeline__time">7:00PM</span></span>
+          </li>
+        </ol>
+      </section>
 
-      <p class="upload__lead">Help us remember the day through your eyes</p>
+      <section class="block" aria-labelledby="h-gifts">
+        <h2 id="h-gifts"><img class="script" src="assets/gifts.png" width="135" height="94" alt="Gifts"></h2>
+        <p class="prose">
+          Your presence at our wedding day is the greatest present of all,
+          but if you would like to give a gift and help us on our way,
+          a contribution towards our honeymoon would really make our day.
+        </p>
+      </section>
+    </aside>
 
-      <input class="upload__input" id="photo-input" type="file" accept="image/*" multiple>
-      <label class="upload__trigger" id="upload-label" for="photo-input">Upload your wedding photos</label>
+    <!-- Centre panel: names, date, venue, upload -->
+    <header class="panel panel--centre">
+      <h1 style="margin:0">
+        <img class="script names" src="assets/names.png" width="290" height="325" alt="Faron &amp; Darren">
+      </h1>
+      <p class="invite-line">Invite you to celebrate<br>their wedding</p>
 
-      <p class="upload__status" id="status" role="status" aria-live="polite"></p>
-    </div>
-  </section>
+      <p class="date" aria-label="5 December 2026">
+        <span>05</span><span class="bar"></span><span>12</span><span class="bar"></span><span>26</span>
+      </p>
+
+      <p class="venue">Abbey House Hotel &amp; Gardens</p>
+      <a class="address" href="https://www.google.com/maps/search/?api=1&amp;query=Abbey+House+Hotel+Abbey+Rd+Barrow-in-Furness+LA13+0PA" target="_blank" rel="noopener">Abbey Rd, Barrow-in-Furness LA13 0PA</a>
+      <p class="arrive">Arrive at 2pm</p>
+
+      <section class="upload" aria-labelledby="upload-label">
+        <div class="upload__card" id="dropzone">
+          <svg class="upload__icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 15.5h8.5l3.2-4.5h12.6l3.2 4.5H42a1.5 1.5 0 0 1 1.5 1.5v20A1.5 1.5 0 0 1 42 38.5H6A1.5 1.5 0 0 1 4.5 37V17A1.5 1.5 0 0 1 6 15.5Z"/>
+            <circle cx="24" cy="26.5" r="7.5"/>
+            <circle cx="24" cy="26.5" r="4"/>
+            <path d="M9 20.5h3.5"/>
+            <path d="M37.5 20.5h.01"/>
+          </svg>
+
+          <p class="upload__lead">Help us remember the day through your eyes</p>
+
+          <input class="upload__input" id="photo-input" type="file" accept="image/*" multiple>
+          <label class="upload__trigger" id="upload-label" for="photo-input">Upload your wedding photos</label>
+
+          <p class="upload__status" id="status" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+    </header>
+
+    <!-- Right panel: Accommodation, Attire, RSVP -->
+    <aside class="panel panel--side panel--right">
+      <section class="block" aria-labelledby="h-stay">
+        <h2 id="h-stay"><img class="script" src="assets/accommodation.png" width="338" height="89" alt="Accommodation"></h2>
+        <p class="prose">
+          Both the ceremony and reception will take place at Abbey House.
+          The venue itself has a wide range of accommodation options available
+          with a special wedding rate available. Book directly through the hotel
+          reception, letting them know you're one of our guests.
+        </p>
+        <p class="prose">
+          If you prefer alternative accommodation, we'd recommend the Premier Inns
+          at either Barrow-in-Furness (10 minutes drive) or Ulverston (16 minutes drive).
+        </p>
+      </section>
+
+      <section class="block" aria-labelledby="h-attire">
+        <h2 id="h-attire"><img class="script" src="assets/attire.png" width="150" height="89" alt="Attire"></h2>
+        <p class="prose">Black-Tie requested</p>
+      </section>
+
+      <section class="block" aria-labelledby="h-rsvp">
+        <h2 id="h-rsvp"><img class="script" src="assets/rsvp.png" width="103" height="84" alt="RSVP"></h2>
+        <p class="prose">To either Faron or Darren<br>by 5<sup>th</sup> June</p>
+        <p class="prose closing">We can't wait to share our special day with you!</p>
+      </section>
+    </aside>
+
+  </main>
 
   <section class="gallery page" aria-labelledby="gallery-title">
     <h2 class="gallery__title" id="gallery-title">The Shared Gallery</h2>
@@ -362,7 +550,7 @@
   </section>
 
   <footer class="colophon page">
-    <p>with love</p>
+    Faron &amp; Darren · 05 | 12 | 26
   </footer>
 
   <script>
