@@ -454,9 +454,43 @@
       }
     }
 
+    // Shrink large photos on the guest's phone before sending: keeps them
+    // under Cloudinary's 10 MB free-plan limit and speeds up venue Wi-Fi.
+    const MAX_DIMENSION = 2500;
+    const JPEG_QUALITY  = 0.85;
+    const SHRINK_ABOVE  = 1.5 * 1024 * 1024;
+
+    function loadImage(file) {
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload  = () => { URL.revokeObjectURL(url); resolve(img); };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('decode failed')); };
+        img.src = url;
+      });
+    }
+
+    async function shrink(file) {
+      if (file.size <= SHRINK_ABOVE || file.type === 'image/gif') return file;
+      try {
+        const img = await loadImage(file);   // browsers apply EXIF rotation here
+        const scale = Math.min(1, MAX_DIMENSION / Math.max(img.naturalWidth, img.naturalHeight));
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(img.naturalWidth * scale);
+        canvas.height = Math.round(img.naturalHeight * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', JPEG_QUALITY));
+        if (!blob || blob.size >= file.size) return file;
+        const name = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+        return new File([blob], name, { type: 'image/jpeg' });
+      } catch {
+        return file;   // e.g. HEIC on a desktop browser – Cloudinary can still take the original
+      }
+    }
+
     async function uploadOne(file) {
       const body = new FormData();
-      body.append('file', file);
+      body.append('file', await shrink(file));
       body.append('upload_preset', UPLOAD_PRESET);
       body.append('tags', TAG);
 
