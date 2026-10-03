@@ -161,13 +161,12 @@ function baseCss() {
     .entry__message { font-family: 'Playfair Display', serif; font-style: italic; font-size: ${11 * u}pt; line-height: 1.55; color: #474747; margin: 0; overflow-wrap: anywhere; }
     .entry__name { font-family: 'Licorice', cursive; font-size: ${24 * u}pt; line-height: 1.1; letter-spacing: 0.03em; color: #1f1f1f; text-align: right; margin: 1.5mm 0 0; overflow-wrap: anywhere; }
 
-    .entry--photo { display: grid; grid-template-columns: 40% 1fr; column-gap: ${7 * u}mm; align-items: center; }
-    .entry--photo.flip { grid-template-columns: 1fr 40%; }
+    /* The tilted polaroid (frame, shadow and all) is pre-rendered as one smooth image
+       by bakePolaroids(), so nothing is rotated inside the PDF itself */
+    .entry--photo { display: grid; grid-template-columns: 45% 1fr; column-gap: ${5 * u}mm; align-items: center; }
+    .entry--photo.flip { grid-template-columns: 1fr 45%; }
     .entry--photo.flip .polaroid { order: 2; }
-    .polaroid { margin: 0; background: #fff; padding: ${2.2 * u}mm ${2.2 * u}mm ${7 * u}mm; border: 0.3pt solid #e4e1da;
-                box-shadow: 0 ${0.6 * u}mm ${1.8 * u}mm rgba(0,0,0,0.16); transform: rotate(-1.6deg); }
-    .flip .polaroid { transform: rotate(1.6deg); }
-    .polaroid img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+    .polaroid { display: block; width: 100%; height: auto; }
 
     .num { position: absolute; left: 0; right: 0; bottom: ${BLEED + bottom * 0.45}mm; text-align: center;
            font-family: 'Playfair Display', serif; font-style: italic; font-size: ${8 * u}pt; color: #9a968e; }
@@ -216,11 +215,10 @@ function interiorHtml(entries) {
         if (e.printSrc) {
           // photo beside the words, swapping sides each time
           n.className = 'entry entry--photo' + (photoCount++ % 2 ? ' flip' : '');
-          const fig = el('figure', 'polaroid'), img = el('img', '');
-          img.src = e.printSrc;
-          fig.appendChild(img);
+          const img = el('img', 'polaroid');
+          img.src = e.polaroidSrc;
           text = el('div', 'entry__text');
-          n.append(fig, text);
+          n.append(img, text);
         }
         text.appendChild(el('p', 'entry__message', e.message));
         text.appendChild(el('p', 'entry__name', e.name));
@@ -249,6 +247,34 @@ function coverHtml() {
   </body></html>`;
 }
 
+/* ── Polaroids ───────────────────────────────────────────────────────────
+   Rotating an image inside a PDF leaves stepped edges in many viewers, so
+   each tilted polaroid is drawn here at high resolution (smooth, anti-
+   aliased edges and a soft shadow) on the exact page colour, and placed in
+   the book as an ordinary upright image. */
+async function bakePolaroids(browser, entries) {
+  const page = await browser.newPage({ deviceScaleFactor: 2.5 });
+  let n = 0;
+  for (const e of entries) {
+    if (!e.printSrc) continue;
+    const tilt = n++ % 2 ? 1.6 : -1.6;          // matches the alternating layout
+    const file = fileURLToPath(e.printSrc).replace(/\.jpg$/, '-polaroid.jpg');
+    const html = file.replace(/\.jpg$/, '.html');
+    await writeFile(html, `<!doctype html><html><body style="margin:0;background:${PAPER}">
+      <div id="w" style="display:inline-block;padding:36px;background:${PAPER}">
+        <figure style="margin:0;width:480px;background:#fff;padding:22px 22px 72px;border:1px solid #e4e1da;
+                       box-shadow:0 7px 20px rgba(0,0,0,0.16);transform:rotate(${tilt}deg)">
+          <img src="${e.printSrc}" style="display:block;width:100%;aspect-ratio:1;object-fit:cover">
+        </figure>
+      </div></body></html>`);
+    await page.goto(pathToFileURL(html).href, { waitUntil: 'load' });
+    await page.evaluate(() => document.querySelector('img').decode());
+    await page.locator('#w').screenshot({ path: file, type: 'jpeg', quality: 93 });
+    e.polaroidSrc = pathToFileURL(file).href;
+  }
+  await page.close();
+}
+
 /* ── Render ──────────────────────────────────────────────────────────── */
 async function renderPdf(browser, html, file) {
   const page = await browser.newPage();
@@ -268,10 +294,11 @@ async function renderPdf(browser, html, file) {
 const entries = await loadEntries();
 await mkdir(OUT, { recursive: true });
 await downloadPhotos(entries);
-await writeFile(path.join(OUT, 'guestbook.json'), JSON.stringify(entries.map(({ printSrc, ...e }) => e), null, 2) + '\n');
+await writeFile(path.join(OUT, 'guestbook.json'), JSON.stringify(entries.map(({ printSrc, polaroidSrc, ...e }) => e), null, 2) + '\n');
 await writeFile(path.join(OUT, 'guestbook.csv'), toCsv(entries));
 
 const browser = await chromium.launch();
+await bakePolaroids(browser, entries);
 const interiorPages = await renderPdf(browser, interiorHtml(entries), path.join(OUT, 'guestbook-interior.pdf'));
 await renderPdf(browser, coverHtml(), path.join(OUT, 'guestbook-cover.pdf'));
 await browser.close();
