@@ -9,7 +9,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,500&family=Open+Sans:wght@300;400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Licorice&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,500&family=Open+Sans:wght@300;400&display=swap" rel="stylesheet">
 
   <style>
     :root {
@@ -19,6 +19,7 @@
       --line: rgba(255, 255, 255, 0.2);
       --serif: 'Playfair Display', Georgia, serif;
       --sans: 'Open Sans', 'Helvetica Neue', Arial, sans-serif;
+      --script: 'Licorice', cursive;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
@@ -366,6 +367,385 @@
       .viewer__prev, .viewer__next { display: none; }   /* swipe instead */
     }
 
+    /* ── Guestbook card ────────────────────────────────── */
+    .guestbook {
+      width: 100%;
+      max-width: 420px;
+      margin-top: 28px;
+    }
+
+    .guestbook__title {
+      font-family: var(--script);
+      font-weight: 400;
+      font-size: 3.4rem;
+      line-height: 1;
+      letter-spacing: 0.03em;
+      margin: -6px 0 10px;
+    }
+
+    .guestbook__actions {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px 22px;
+    }
+
+    .guestbook__divider {
+      width: 1px;
+      height: 20px;
+      background: var(--line);
+    }
+
+    button.upload__trigger {
+      border: 0;
+      background: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    button.upload__trigger:focus-visible {
+      outline: 1px solid var(--line);
+      outline-offset: 6px;
+    }
+
+    /* ── Guestbook overlays (sign form + book) ─────────── */
+    .gb-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 72px 16px 24px;
+      background: #19191b;
+      overflow-y: auto;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.35s ease, visibility 0s linear 0.35s;
+    }
+
+    .gb-modal.is-open {
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.35s ease;
+    }
+
+    .gb-modal--book { overflow: hidden; padding-top: 56px; }
+
+    /* Sign form */
+    .gb-form {
+      position: relative;
+      width: min(440px, 100%);
+      margin: auto;
+      padding: 44px 28px 32px;
+      border: 1px solid var(--line);
+      text-align: center;
+    }
+
+    .gb-form::before {
+      content: '';
+      position: absolute;
+      inset: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      pointer-events: none;
+    }
+
+    .gb-form__title {
+      font-family: var(--serif);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 1.6rem;
+      margin: 0 0 6px;
+    }
+
+    .gb-form__lead {
+      font-size: 0.66rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 30px;
+    }
+
+    .gb-field {
+      position: relative;
+      display: block;
+      text-align: left;
+      margin: 0 0 22px;
+    }
+
+    .gb-field__label {
+      display: block;
+      font-size: 0.64rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .gb-field input,
+    .gb-field textarea {
+      display: block;
+      width: 100%;
+      padding: 6px 0 8px;
+      border: 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 0;
+      background: transparent;
+      color: var(--white);
+      font: 400 1rem/1.6 var(--sans);
+      outline: none;
+      resize: none;
+      transition: border-color 0.3s ease;
+    }
+
+    .gb-field input:focus,
+    .gb-field textarea:focus { border-bottom-color: var(--white); }
+
+    .gb-field__count {
+      display: block;
+      text-align: right;
+      font-size: 0.66rem;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .gb-preview {
+      font-family: var(--script);
+      font-size: 2.7rem;
+      line-height: 1.15;
+      letter-spacing: 0.03em;
+      min-height: 1.2em;
+      margin: -8px 0 18px;
+      overflow-wrap: anywhere;
+      transition: color 0.3s ease;
+    }
+
+    .gb-preview.is-empty { color: rgba(255, 255, 255, 0.22); }
+
+    .gb-form .upload__status { margin-top: 16px; }
+
+    .gb-close { top: 10px; right: 10px; }
+
+    /* Book */
+    .book {
+      --pw: 380px;
+      --ph: 540px;
+      position: relative;
+      flex: none;
+      width: calc(var(--pw) * 2);
+      height: var(--ph);
+      perspective: 2600px;
+      transition: transform 0.9s cubic-bezier(0.645, 0.045, 0.355, 1);
+    }
+
+    .book.is-single { width: var(--pw); }
+
+    .book-clip { flex: none; }
+    .book-clip.is-single { overflow: hidden; padding: 48px 0; margin: -48px 0; }
+
+    .book.is-entering { animation: book-in 0.7s ease both; }
+
+    @keyframes book-in {
+      from { opacity: 0; transform: translateY(18px) scale(0.96); }
+    }
+
+    .book.no-anim, .book.no-anim .leaf { transition: none !important; }
+
+    .leaf {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: var(--pw);
+      height: 100%;
+      transform-origin: left center;
+      transform-style: preserve-3d;
+      transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+      cursor: pointer;
+    }
+
+    .book.is-single .leaf { left: 0; }
+    .leaf.is-flipped { transform: rotateY(-180deg); }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      background: #f5f2eb;
+      color: #2b2b2b;
+    }
+
+    .face--front {
+      border-radius: 0 3px 3px 0;
+      box-shadow: inset 16px 0 22px -16px rgba(0, 0, 0, 0.35), 0 12px 34px rgba(0, 0, 0, 0.35);
+    }
+
+    .face--back {
+      transform: rotateY(180deg);
+      border-radius: 3px 0 0 3px;
+      box-shadow: inset -16px 0 22px -16px rgba(0, 0, 0, 0.35), 0 12px 34px rgba(0, 0, 0, 0.35);
+    }
+
+    .face--cover, .face--backcover {
+      background: #2a2a2c;
+      color: var(--white);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .face--cover::before, .face--cover::after {
+      content: '';
+      position: absolute;
+      pointer-events: none;
+    }
+    .face--cover::before { inset: 5%; border: 1px solid rgba(255, 255, 255, 0.35); }
+    .face--cover::after  { inset: 6.4%; border: 1px solid rgba(255, 255, 255, 0.12); }
+
+    .cover__names { width: 46%; height: auto; }
+
+    .cover__title {
+      font-family: var(--script);
+      font-size: calc(var(--pw) * 0.13);
+      line-height: 1;
+      letter-spacing: 0.03em;
+      margin: 6% 0 0;
+    }
+
+    .cover__date {
+      font-family: var(--serif);
+      font-size: calc(var(--pw) * 0.036);
+      letter-spacing: 0.3em;
+      color: var(--muted);
+      margin: 5% 0 0;
+    }
+
+    .sheet {
+      position: absolute;
+      inset: 8% 10% 11%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sheet--center {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .sheet__num {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 4.5%;
+      text-align: center;
+      font: italic calc(var(--pw) * 0.032) var(--serif);
+      color: #9a968e;
+    }
+
+    .sheet__script {
+      font-family: var(--script);
+      font-size: calc(var(--pw) * 0.12);
+      line-height: 1.1;
+      letter-spacing: 0.03em;
+      margin: 0;
+    }
+
+    .sheet__names { width: 44%; height: auto; filter: invert(1) brightness(0.25); }
+
+    .sheet__text {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: calc(var(--pw) * 0.045);
+      line-height: 1.6;
+      color: #555;
+      margin: 7% 0 0;
+    }
+
+    .sheet__small {
+      font-size: calc(var(--pw) * 0.026);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #8d897f;
+      margin: 6% 0 0;
+    }
+
+    .sheet__link {
+      margin-top: 8%;
+      padding: 4px 2px;
+      border: 0;
+      background: none;
+      font: 400 calc(var(--pw) * 0.03) var(--sans);
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: #2b2b2b;
+      text-decoration: underline;
+      text-underline-offset: 6px;
+      text-decoration-color: rgba(0, 0, 0, 0.35);
+      cursor: pointer;
+    }
+
+    .entry { padding: 4.5% 0; }
+    .entry + .entry { border-top: 1px solid rgba(0, 0, 0, 0.1); }
+
+    .entry__message {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: calc(var(--pw) * 0.043);
+      line-height: 1.55;
+      color: #474747;
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .entry__name {
+      font-family: var(--script);
+      font-size: calc(var(--pw) * 0.1);
+      line-height: 1.1;
+      letter-spacing: 0.03em;
+      color: #1f1f1f;
+      text-align: right;
+      margin: 1% 0 0;
+      overflow-wrap: anywhere;
+    }
+
+    /* A newly signed name is "written" on once the book opens to it */
+    .entry.is-new .entry__name { clip-path: inset(-30% 100% -30% 0); }
+    .entry.is-new .entry__message { opacity: 0; }
+    .entry.is-writing .entry__message { animation: ink-fade 0.9s ease forwards; }
+    .entry.is-writing .entry__name { animation: ink-write 2.2s 0.5s ease-in-out forwards; }
+
+    @keyframes ink-fade  { to { opacity: 1; } }
+    @keyframes ink-write { to { clip-path: inset(-30% -5% -30% 0); } }
+
+    .book-nav {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .book-nav .viewer__btn { position: static; transform: none; }
+    .book-nav .viewer__btn:disabled { opacity: 0.18; cursor: default; }
+
+    .book-nav__label {
+      min-width: 76px;
+      text-align: center;
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .book-sign { margin-top: 10px; }
+
     /* ── Footer ────────────────────────────────────────── */
     .colophon {
       border-top: 1px solid var(--line);
@@ -386,13 +766,21 @@
       .date { margin-top: 36px; }
       .venue { letter-spacing: 0.18em; }
 
+      .guestbook__actions { gap: 10px 14px; }
+      .guestbook__actions .upload__trigger { letter-spacing: 0.16em; padding-left: 0; padding-right: 0; }
+
       /* Edge-to-edge gallery on phones */
       .tiles { margin: 0 -16px; }
     }
 
+    @media (max-width: 359px) {
+      .guestbook__divider { display: none; }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .tiles__item, .upload__status.is-pulsing { animation: none; opacity: 1; }
-      .viewer, .viewer__img { transition: none; }
+      .viewer, .viewer__img, .gb-modal, .book, .leaf { transition: none; }
+      .book.is-entering { animation: none; }
       .tiles__item img { transition: none; }
     }
   </style>
@@ -428,6 +816,25 @@
         <p class="upload__status" id="status" role="status" aria-live="polite"></p>
       </div>
     </section>
+
+    <section class="guestbook" aria-labelledby="gb-title">
+      <div class="upload__card">
+        <svg class="upload__icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M24 14.5c-4.2-3-10-4-17-3.4v25c7-.6 12.8.4 17 3.4 4.2-3 10-4 17-3.4v-25c-7-.6-12.8.4-17 3.4Z"/>
+          <path d="M24 14.5v25"/>
+          <path d="M11 17.5c3.6-.2 6.8.4 9.5 1.8M11 22.5c3.6-.2 6.8.4 9.5 1.8M11 27.5c3.6-.2 6.8.4 9.5 1.8"/>
+        </svg>
+
+        <h2 class="guestbook__title" id="gb-title">Guestbook</h2>
+        <p class="upload__lead">Leave us a few words to treasure</p>
+
+        <div class="guestbook__actions">
+          <button class="upload__trigger" id="gb-view" type="button">View the book</button>
+          <span class="guestbook__divider" aria-hidden="true"></span>
+          <button class="upload__trigger" id="gb-sign" type="button">Sign the book</button>
+        </div>
+      </div>
+    </section>
   </main>
 
   <section class="gallery page" aria-labelledby="gallery-title">
@@ -452,6 +859,50 @@
       <span class="viewer__count" id="viewer-count"></span>
       <a class="viewer__save" id="viewer-save" href="#">Save photo</a>
     </div>
+  </div>
+
+  <div class="gb-modal" id="gb-sign-modal" role="dialog" aria-modal="true" aria-labelledby="gb-sign-title" aria-hidden="true">
+    <button class="viewer__btn gb-close" type="button" data-gb-close aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>
+    </button>
+    <form class="gb-form" id="gb-form" novalidate>
+      <h2 class="gb-form__title" id="gb-sign-title">Sign our guestbook</h2>
+      <p class="gb-form__lead">Faron &amp; Darren · 05 | 12 | 26</p>
+
+      <label class="gb-field">
+        <span class="gb-field__label">Your name</span>
+        <input id="gb-name" name="name" type="text" maxlength="60" autocomplete="name" required>
+      </label>
+      <p class="gb-preview is-empty" id="gb-preview" aria-hidden="true">Your signature</p>
+
+      <label class="gb-field">
+        <span class="gb-field__label">Your message</span>
+        <textarea id="gb-message" name="message" rows="4" maxlength="280" required></textarea>
+        <span class="gb-field__count" id="gb-count">0 / 280</span>
+      </label>
+
+      <button class="upload__trigger" id="gb-submit" type="submit">Sign the book</button>
+      <p class="upload__status" id="gb-status" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+
+  <div class="gb-modal gb-modal--book" id="gb-book-modal" role="dialog" aria-modal="true" aria-label="Guestbook" aria-hidden="true">
+    <button class="viewer__btn gb-close" type="button" data-gb-close aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>
+    </button>
+    <div class="book-clip" id="book-clip">
+      <div class="book" id="book"></div>
+    </div>
+    <div class="book-nav">
+      <button class="viewer__btn" id="book-prev" type="button" aria-label="Previous page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4l-8 8 8 8"/></svg>
+      </button>
+      <span class="book-nav__label" id="book-label" aria-live="polite"></span>
+      <button class="viewer__btn" id="book-next" type="button" aria-label="Next page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4l8 8-8 8"/></svg>
+      </button>
+    </div>
+    <button class="upload__trigger book-sign" id="book-sign" type="button">Sign the book</button>
   </div>
 
   <footer class="colophon page">
@@ -589,7 +1040,9 @@
     // Merge new resources, add tiles for any new ones, then re-tile.
     function render(resources) {
       const byId = new Map(known.map(r => [r.public_id, r]));
-      resources.forEach(r => byId.set(r.public_id, r));
+      resources
+        .filter(r => r.context?.custom?.kind !== 'guestbook')   // never show guestbook placeholders as photos
+        .forEach(r => byId.set(r.public_id, r));
       known = [...byId.values()].sort((a, b) =>
         new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
@@ -819,6 +1272,464 @@
       if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) show(current + (dx < 0 ? 1 : -1));
       else if (dy > 90 && Math.abs(dy) > Math.abs(dx)) requestClose();
     }, { passive: true });
+
+    /* ── Guestbook ─────────────────────────────────────────────────────
+       Each signature is stored in Cloudinary as a 1×1 placeholder image
+       tagged GUESTBOOK_TAG, with the name and message kept in its context
+       metadata, so the book can be read back from the public list. */
+    const GUESTBOOK_TAG = 'wedding_guestbook';
+    const GB_LIST_URL   = `https://res.cloudinary.com/${CLOUD_NAME}/image/list/${GUESTBOOK_TAG}.json`;
+    const BLANK_PNG     = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+
+    const gbSignModal = document.getElementById('gb-sign-modal');
+    const gbBookModal = document.getElementById('gb-book-modal');
+    const gbForm      = document.getElementById('gb-form');
+    const gbName      = document.getElementById('gb-name');
+    const gbMessage   = document.getElementById('gb-message');
+    const gbPreview   = document.getElementById('gb-preview');
+    const gbCount     = document.getElementById('gb-count');
+    const gbStatus    = document.getElementById('gb-status');
+    const gbSubmit    = document.getElementById('gb-submit');
+    const bookClip    = document.getElementById('book-clip');
+    const bookEl      = document.getElementById('book');
+    const bookLabel   = document.getElementById('book-label');
+    const bookPrev    = document.getElementById('book-prev');
+    const bookNext    = document.getElementById('book-next');
+
+    let gbEntries = [];            // oldest first, like a real book
+    const gbLocal = new Map();     // signed on this visit (the public list can lag a few minutes)
+    let gbOpen = null;             // 'sign' | 'book' | null
+
+    /* Overlays: one history entry while open, so the phone back button closes it */
+    function gbShow(which) {
+      const target = which === 'book' ? gbBookModal : gbSignModal;
+      [gbSignModal, gbBookModal].forEach(m => {
+        m.classList.toggle('is-open', m === target);
+        m.setAttribute('aria-hidden', String(m !== target));
+      });
+      document.body.style.overflow = 'hidden';
+      if (history.state?.gb) history.replaceState({ gb: which }, '');
+      else history.pushState({ gb: which }, '');
+      gbOpen = which;
+    }
+
+    function gbHide() {
+      [gbSignModal, gbBookModal].forEach(m => {
+        m.classList.remove('is-open');
+        m.setAttribute('aria-hidden', 'true');
+      });
+      document.body.style.overflow = '';
+      gbOpen = null;
+      clearTimeout(riffleTimer);
+    }
+
+    const gbRequestClose = () => history.state?.gb ? history.back() : gbHide();
+    window.addEventListener('popstate', () => { if (gbOpen) gbHide(); });
+    document.querySelectorAll('[data-gb-close]').forEach(b => b.addEventListener('click', gbRequestClose));
+    gbSignModal.addEventListener('click', e => { if (e.target === gbSignModal) gbRequestClose(); });
+
+    /* ── Entries ── */
+    async function loadGuestbook() {
+      let list = [];
+      try {
+        const res = await fetch(`${GB_LIST_URL}?t=${Date.now()}`);
+        if (res.ok) list = (await res.json()).resources || [];
+      } catch (err) {
+        console.error(err);
+      }
+      const byId = new Map();
+      list.forEach(r => {
+        const c = r.context?.custom;
+        if (c?.kind === 'guestbook' && c.name) {
+          byId.set(r.public_id, { id: r.public_id, name: c.name, message: c.message || '', at: r.created_at });
+        }
+      });
+      gbLocal.forEach((e, id) => byId.set(id, e));
+      gbEntries = [...byId.values()].sort((a, b) => new Date(a.at) - new Date(b.at));
+    }
+
+    const tidy = s => s.replace(/\s+/g, ' ').trim();
+    // Cloudinary context values use | and = as separators, so escape them
+    const ctx = s => s.replace(/\\/g, '').replace(/([|=])/g, '\\$1');
+
+    async function signGuestbook(name, message) {
+      const body = new FormData();
+      body.append('file', BLANK_PNG);
+      body.append('upload_preset', UPLOAD_PRESET);
+      body.append('tags', GUESTBOOK_TAG);
+      body.append('context', `kind=guestbook|name=${ctx(name)}|message=${ctx(message)}`);
+      const res = await fetch(UPLOAD_URL, { method: 'POST', body });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error?.message || `Signing failed (${res.status})`);
+      return json;
+    }
+
+    /* ── Sign form ── */
+    function updatePreview() {
+      const name = tidy(gbName.value);
+      gbPreview.textContent = name || 'Your signature';
+      gbPreview.classList.toggle('is-empty', !name);
+    }
+
+    gbName.addEventListener('input', updatePreview);
+    gbMessage.addEventListener('input', () => { gbCount.textContent = `${gbMessage.value.length} / 280`; });
+
+    function openSign() {
+      gbStatus.textContent = '';
+      gbStatus.classList.remove('is-pulsing');
+      gbShow('sign');
+      setTimeout(() => gbName.focus({ preventScroll: true }), 350);
+    }
+
+    gbForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const name = tidy(gbName.value);
+      const message = tidy(gbMessage.value);
+      if (!name)    { gbStatus.textContent = 'Please add your name.'; gbName.focus(); return; }
+      if (!message) { gbStatus.textContent = 'Please leave a little message.'; gbMessage.focus(); return; }
+      if (!isConfigured) { gbStatus.textContent = 'The guestbook is not configured yet.'; return; }
+
+      gbSubmit.disabled = true;
+      gbStatus.textContent = 'Signing the book…';
+      gbStatus.classList.add('is-pulsing');
+      try {
+        const json = await signGuestbook(name, message);
+        gbLocal.set(json.public_id, {
+          id: json.public_id, name, message,
+          at: json.created_at || new Date().toISOString(),
+          isNew: true
+        });
+        gbForm.reset();
+        updatePreview();
+        gbCount.textContent = '0 / 280';
+        gbStatus.textContent = '';
+        gbStatus.classList.remove('is-pulsing');
+        openBook(true);
+      } catch (err) {
+        console.error(err);
+        gbStatus.classList.remove('is-pulsing');
+        gbStatus.textContent = 'Something went wrong — please try again.';
+      } finally {
+        gbSubmit.disabled = false;
+      }
+    });
+
+    /* ── The book ──
+       Pages are faces of "leaves" that turn around the spine. On wide
+       screens each leaf carries two pages (front = right, back = left) and
+       the book opens as a spread; on phones each leaf is a single page. */
+    let leaves = [];
+    let flipped = 0;
+    let single = false;
+    let zTick = 0;
+    let riffleTimer = null;
+    let newEntryTarget = null;
+
+    const make = (tag, cls, text) => {
+      const n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text != null) n.textContent = text;
+      return n;
+    };
+
+    function sizeBook() {
+      single = window.innerWidth < 760;
+      const room = window.innerHeight - 190;
+      const pw = single
+        ? Math.min(window.innerWidth - 32, 400, room / 1.42)
+        : Math.min((window.innerWidth - 120) / 2, 420, room / 1.42);
+      bookEl.style.setProperty('--pw', `${Math.max(200, pw)}px`);
+      bookEl.style.setProperty('--ph', `${Math.max(200, pw) * 1.42}px`);
+      bookEl.classList.toggle('is-single', single);
+      bookClip.classList.toggle('is-single', single);
+    }
+
+    function entryNode(e) {
+      const n = make('div', 'entry');
+      n.appendChild(make('p', 'entry__message', e.message));
+      n.appendChild(make('p', 'entry__name', e.name));
+      if (e.isNew) n.classList.add('is-new');
+      return n;
+    }
+
+    // Fill pages until each one overflows (sizes scale with page width, so this holds at any size)
+    function paginate(entries) {
+      const face = make('div', 'face');
+      face.style.cssText = 'visibility:hidden;width:var(--pw);height:var(--ph);left:0;top:0';
+      const page = make('div', 'sheet');
+      face.appendChild(page);
+      bookEl.appendChild(face);
+
+      const pages = [];
+      let current = [];
+      for (const e of entries) {
+        const node = entryNode(e);
+        page.appendChild(node);
+        if (page.scrollHeight > page.clientHeight + 1 && current.length) {
+          pages.push(current);
+          current = [];
+          page.textContent = '';
+          page.appendChild(node);
+        }
+        current.push(e);
+      }
+      if (current.length) pages.push(current);
+      face.remove();
+      return pages;
+    }
+
+    function coverFace() {
+      const f = make('div', 'face face--cover');
+      const img = make('img', 'cover__names');
+      img.src = 'assets/names.png';
+      img.alt = 'Faron & Darren';
+      f.append(img, make('p', 'cover__title', 'Guestbook'), make('p', 'cover__date', '05 | 12 | 26'));
+      return f;
+    }
+
+    function centrePage(...children) {
+      const f = make('div', 'face');
+      const p = make('div', 'sheet sheet--center');
+      p.append(...children);
+      f.appendChild(p);
+      return f;
+    }
+
+    function dedicationFace() {
+      const img = make('img', 'sheet__names');
+      img.src = 'assets/names.png';
+      img.alt = 'Faron & Darren';
+      return centrePage(
+        img,
+        make('p', 'sheet__text', 'Thank you for sharing our day with us.'),
+        make('p', 'sheet__small', 'Abbey House Hotel & Gardens')
+      );
+    }
+
+    function emptyFace() {
+      const btn = make('button', 'sheet__link', 'Sign the book');
+      btn.type = 'button';
+      btn.addEventListener('click', openSign);
+      return centrePage(
+        make('p', 'sheet__script', 'Be the first'),
+        make('p', 'sheet__text', 'No one has signed yet — leave the very first message.'),
+        btn
+      );
+    }
+
+    function endFace() {
+      return centrePage(
+        make('p', 'sheet__script', 'With love'),
+        make('p', 'sheet__text', 'Faron & Darren'),
+        make('p', 'sheet__small', '05 | 12 | 26')
+      );
+    }
+
+    function entriesFace(list, num) {
+      const f = make('div', 'face');
+      const p = make('div', 'sheet');
+      list.forEach(e => p.appendChild(entryNode(e)));
+      f.append(p, make('span', 'sheet__num', String(num)));
+      return f;
+    }
+
+    function buildBook() {
+      sizeBook();
+      bookEl.textContent = '';
+      newEntryTarget = null;
+
+      const pages = paginate(gbEntries);
+      const content = [dedicationFace()];
+      let newSide = null;
+      if (pages.length) {
+        pages.forEach((list, i) => {
+          if (list.some(e => e.isNew)) newSide = 1 + content.length;   // +1 for the cover
+          content.push(entriesFace(list, i + 1));
+        });
+      } else {
+        content.push(emptyFace());
+      }
+      content.push(endFace());
+      gbEntries.forEach(e => { e.isNew = false; });   // only animate it the first time
+
+      const sides = [coverFace(), ...content];
+      if (!single) {
+        if (sides.length % 2 === 0) sides.push(make('div', 'face'));   // keep the back cover on a left page
+        sides.push(make('div', 'face face--backcover'));
+      }
+
+      leaves = [];
+      const step = single ? 1 : 2;
+      for (let i = 0; i < sides.length; i += step) {
+        const leaf = make('div', 'leaf');
+        const front = sides[i];
+        const back = single ? make('div', 'face') : sides[i + 1];
+        front.classList.add('face--front');
+        back.classList.add('face--back');
+        leaf.append(front, back);
+        leaves.push(leaf);
+        bookEl.appendChild(leaf);
+      }
+
+      if (newSide != null) {
+        newEntryTarget = single ? newSide : (newSide % 2 ? (newSide + 1) / 2 : newSide / 2);
+      }
+
+      flipped = 0;
+      bookEl.classList.add('no-anim');
+      applyBook();
+      void bookEl.offsetWidth;
+      bookEl.classList.remove('no-anim');
+    }
+
+    const maxFlip = () => single ? leaves.length - 1 : leaves.length;
+    const restingZ = i => i < flipped ? i + 1 : leaves.length - i;
+
+    function applyBook() {
+      const animate = !bookEl.classList.contains('no-anim');
+      leaves.forEach((leaf, i) => {
+        const want = i < flipped;
+        if (leaf.classList.contains('is-flipped') !== want) {
+          leaf.classList.toggle('is-flipped', want);
+          if (animate) {
+            // keep the turning page above both stacks until it lands
+            leaf.dataset.moving = '1';
+            leaf.style.zIndex = 1000 + (++zTick);
+            clearTimeout(leaf._settle);
+            leaf._settle = setTimeout(() => {
+              delete leaf.dataset.moving;
+              leaf.style.zIndex = restingZ(leaves.indexOf(leaf));
+            }, 1050);
+            return;
+          }
+        }
+        if (!leaf.dataset.moving) leaf.style.zIndex = restingZ(i);
+      });
+
+      if (!single) {
+        // centre the closed book on its cover (or back cover)
+        bookEl.style.transform = flipped === 0 ? 'translateX(-25%)'
+          : flipped === leaves.length ? 'translateX(25%)' : 'none';
+      } else {
+        bookEl.style.transform = 'none';
+      }
+
+      bookPrev.disabled = flipped === 0;
+      bookNext.disabled = flipped >= maxFlip();
+      bookLabel.textContent = flipped === 0 ? 'Cover'
+        : flipped >= maxFlip() && !single ? 'The end'
+        : `${flipped} / ${maxFlip()}`;
+    }
+
+    function turnTo(n) {
+      const next = Math.max(0, Math.min(maxFlip(), n));
+      if (next === flipped) return;
+      flipped = next;
+      applyBook();
+    }
+
+    // Leaf through several pages one after another, like riffling a real book
+    function riffleTo(target, done) {
+      clearTimeout(riffleTimer);
+      const stepOnce = () => {
+        if (flipped === target) { done && done(); return; }
+        turnTo(flipped + (target > flipped ? 1 : -1));
+        riffleTimer = setTimeout(stepOnce, flipped === 1 ? 520 : 240);
+      };
+      stepOnce();
+    }
+
+    const fontsReady = () => Promise.race([
+      document.fonts ? document.fonts.load('1em Licorice').then(() => document.fonts.ready) : Promise.resolve(),
+      new Promise(r => setTimeout(r, 1500))
+    ]);
+
+    async function openBook(toNewEntry = false) {
+      bookEl.textContent = '';
+      bookLabel.textContent = 'Opening…';
+      bookPrev.disabled = bookNext.disabled = true;
+      gbShow('book');
+
+      await Promise.all([loadGuestbook(), fontsReady()]);
+      if (gbOpen !== 'book') return;
+      buildBook();
+
+      bookEl.classList.remove('is-entering');
+      void bookEl.offsetWidth;
+      bookEl.classList.add('is-entering');
+
+      const target = toNewEntry && newEntryTarget != null ? newEntryTarget : 1;
+      riffleTimer = setTimeout(() => riffleTo(target, () => {
+        if (!toNewEntry) return;
+        // ink the new signature once its page has landed
+        setTimeout(() => bookEl.querySelectorAll('.entry.is-new').forEach(n => n.classList.add('is-writing')), 900);
+      }), 750);
+    }
+
+    document.getElementById('gb-view').addEventListener('click', () => openBook(false));
+    document.getElementById('gb-sign').addEventListener('click', openSign);
+    document.getElementById('book-sign').addEventListener('click', openSign);
+    bookPrev.addEventListener('click', () => { clearTimeout(riffleTimer); turnTo(flipped - 1); });
+    bookNext.addEventListener('click', () => { clearTimeout(riffleTimer); turnTo(flipped + 1); });
+
+    // Tap a right-hand page to turn forward, a left-hand page to turn back
+    bookEl.addEventListener('click', e => {
+      if (e.target.closest('button, a')) return;
+      clearTimeout(riffleTimer);
+      if (single) {
+        const r = bookEl.getBoundingClientRect();
+        turnTo(flipped + (e.clientX - r.left < r.width * 0.3 ? -1 : 1));
+        return;
+      }
+      const leaf = e.target.closest('.leaf');
+      if (leaf) turnTo(flipped + (leaf.classList.contains('is-flipped') ? -1 : 1));
+    });
+
+    let bookTouchX = null, bookTouchY = null;
+    gbBookModal.addEventListener('touchstart', e => {
+      if (e.touches.length !== 1) { bookTouchX = null; return; }
+      bookTouchX = e.touches[0].clientX;
+      bookTouchY = e.touches[0].clientY;
+    }, { passive: true });
+
+    gbBookModal.addEventListener('touchend', e => {
+      if (bookTouchX === null) return;
+      const dx = e.changedTouches[0].clientX - bookTouchX;
+      const dy = e.changedTouches[0].clientY - bookTouchY;
+      bookTouchX = null;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+        clearTimeout(riffleTimer);
+        turnTo(flipped + (dx < 0 ? 1 : -1));
+        e.preventDefault();   // don't also treat the swipe as a tap
+      }
+    });
+
+    document.addEventListener('keydown', e => {
+      if (!gbOpen) return;
+      if (e.key === 'Escape') gbRequestClose();
+      if (gbOpen === 'book' && e.key === 'ArrowLeft')  { clearTimeout(riffleTimer); turnTo(flipped - 1); }
+      if (gbOpen === 'book' && e.key === 'ArrowRight') { clearTimeout(riffleTimer); turnTo(flipped + 1); }
+    });
+
+    // Re-fit the book when the screen rotates or resizes
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      if (gbOpen !== 'book' || !leaves.length) return;
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        const wasSingle = single;
+        sizeBook();
+        if (single !== wasSingle) {
+          const at = flipped;
+          buildBook();
+          bookEl.classList.add('no-anim');
+          flipped = Math.min(at, maxFlip());
+          applyBook();
+          void bookEl.offsetWidth;
+          bookEl.classList.remove('no-anim');
+        }
+      }, 200);
+    });
 
     loadGallery();
   </script>
