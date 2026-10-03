@@ -18,6 +18,11 @@ on:
         type: choice
         options: [white, cream]
         default: white
+      photos:
+        description: Guest photos
+        type: choice
+        options: [mono, colour]
+        default: mono
       order:
         description: Order of signatures
         type: choice
@@ -51,9 +56,10 @@ jobs:
           SIZE: ${{ inputs.size }}
           BLEED: ${{ inputs.bleed }}
           PAPER: ${{ inputs.paper }}
+          PHOTOS: ${{ inputs.photos }}
           ORDER: ${{ inputs.order }}
           MULTIPLE: ${{ inputs.multiple }}
-        run: node export.mjs --size "$SIZE" --bleed "$BLEED" --paper "$PAPER" --order "$ORDER" --multiple "$MULTIPLE"
+        run: node export.mjs --size "$SIZE" --bleed "$BLEED" --paper "$PAPER" --photos "$PHOTOS" --order "$ORDER" --multiple "$MULTIPLE"
       - uses: actions/upload-artifact@v4
         with:
           name: guestbook-${{ inputs.size }}-${{ inputs.paper }}

@@ -519,6 +519,62 @@
       margin-top: 6px;
     }
 
+    .gb-field__optional {
+      text-transform: none;
+      letter-spacing: 0.04em;
+      font-family: var(--serif);
+      font-style: italic;
+    }
+
+    .gb-photo__actions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      padding-top: 4px;
+    }
+
+    .gb-photo__actions[hidden] { display: none; }
+
+    .gb-photo__btn { font-size: 0.68rem; letter-spacing: 0.18em; padding: 4px 0; }
+
+    .gb-photo__preview {
+      position: relative;
+      width: 132px;
+      margin: 8px 0 4px 4px;
+      padding: 7px 7px 22px;
+      background: #fff;
+      transform: rotate(-2deg);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+    }
+
+    .gb-photo__preview img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      filter: grayscale(100%) contrast(110%);
+    }
+
+    .gb-photo__remove {
+      position: absolute;
+      top: -12px;
+      right: -12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 50%;
+      background: #19191b;
+      color: var(--white);
+      cursor: pointer;
+    }
+
+    .gb-photo__remove svg { width: 14px; height: 14px; }
+
     .gb-preview {
       font-family: var(--script);
       font-size: 2.7rem;
@@ -723,10 +779,29 @@
       overflow-wrap: anywhere;
     }
 
+    /* Guest photo, shown as a little polaroid above the message */
+    .polaroid {
+      width: 40%;
+      margin: 1% auto 5%;
+      padding: 3.2% 3.2% 9%;
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15), 0 6px 14px rgba(0, 0, 0, 0.12);
+      transform: rotate(var(--tilt, -2deg));
+    }
+
+    .polaroid img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      background: #e9e6df;
+      filter: grayscale(100%) contrast(110%);
+    }
+
     /* A newly signed name is "written" on once the book opens to it */
     .entry.is-new .entry__name { clip-path: inset(-30% 100% -30% 0); }
-    .entry.is-new .entry__message { opacity: 0; }
-    .entry.is-writing .entry__message { animation: ink-fade 0.9s ease forwards; }
+    .entry.is-new .entry__message, .entry.is-new .polaroid { opacity: 0; }
+    .entry.is-writing .entry__message, .entry.is-writing .polaroid { animation: ink-fade 0.9s ease forwards; }
     .entry.is-writing .entry__name { animation: ink-write 2.2s 0.5s ease-in-out forwards; }
 
     @keyframes ink-fade  { to { opacity: 1; } }
@@ -886,6 +961,23 @@
         <textarea id="gb-message" name="message" rows="4" maxlength="280" required></textarea>
         <span class="gb-field__count" id="gb-count">0 / 280</span>
       </label>
+
+      <div class="gb-field gb-photo">
+        <span class="gb-field__label">Add a photo <span class="gb-field__optional">(optional)</span></span>
+        <div class="gb-photo__actions" id="gb-photo-actions">
+          <input class="upload__input" id="gb-photo-camera" type="file" accept="image/*" capture="user">
+          <label class="upload__trigger gb-photo__btn" for="gb-photo-camera">Take a photo</label>
+          <span class="guestbook__divider" aria-hidden="true"></span>
+          <input class="upload__input" id="gb-photo-library" type="file" accept="image/*">
+          <label class="upload__trigger gb-photo__btn" for="gb-photo-library">Choose from gallery</label>
+        </div>
+        <div class="gb-photo__preview" id="gb-photo-preview" hidden>
+          <img id="gb-photo-img" alt="Your photo">
+          <button class="gb-photo__remove" id="gb-photo-remove" type="button" aria-label="Remove photo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg>
+          </button>
+        </div>
+      </div>
 
       <button class="upload__trigger" id="gb-submit" type="submit">Sign the book</button>
       <p class="upload__status" id="gb-status" role="status" aria-live="polite"></p>
@@ -1101,11 +1193,11 @@
       });
     }
 
-    async function shrink(file) {
-      if (file.size <= SHRINK_ABOVE || file.type === 'image/gif') return file;
+    async function shrink(file, maxDimension = MAX_DIMENSION, minBytes = SHRINK_ABOVE) {
+      if (file.size <= minBytes || file.type === 'image/gif') return file;
       try {
         const img = await loadImage(file);   // browsers apply EXIF rotation here
-        const scale = Math.min(1, MAX_DIMENSION / Math.max(img.naturalWidth, img.naturalHeight));
+        const scale = Math.min(1, maxDimension / Math.max(img.naturalWidth, img.naturalHeight));
         const canvas = document.createElement('canvas');
         canvas.width  = Math.round(img.naturalWidth * scale);
         canvas.height = Math.round(img.naturalHeight * scale);
@@ -1347,7 +1439,10 @@
       list.forEach(r => {
         const c = r.context?.custom;
         if (c?.kind === 'guestbook' && c.name) {
-          byId.set(r.public_id, { id: r.public_id, name: c.name, message: c.message || '', at: r.created_at });
+          byId.set(r.public_id, {
+            id: r.public_id, name: c.name, message: c.message || '', at: r.created_at,
+            photo: c.photo === '1' ? { id: r.public_id, version: r.version, format: r.format } : null
+          });
         }
       });
       gbLocal.forEach((e, id) => byId.set(id, e));
@@ -1358,12 +1453,14 @@
     // Cloudinary context values use | and = as separators, so escape them
     const ctx = s => s.replace(/\\/g, '').replace(/([|=])/g, '\\$1');
 
-    async function signGuestbook(name, message) {
+    // With a photo, the photo itself is the stored file; otherwise a 1×1 placeholder.
+    // Either way it's tagged for the guestbook only, so it never appears in the gallery.
+    async function signGuestbook(name, message, photo) {
       const body = new FormData();
-      body.append('file', BLANK_PNG);
+      body.append('file', photo ? await shrink(photo, 1600, 0) : BLANK_PNG);
       body.append('upload_preset', UPLOAD_PRESET);
       body.append('tags', GUESTBOOK_TAG);
-      body.append('context', `kind=guestbook|name=${ctx(name)}|message=${ctx(message)}`);
+      body.append('context', `kind=guestbook|name=${ctx(name)}|message=${ctx(message)}${photo ? '|photo=1' : ''}`);
       const res = await fetch(UPLOAD_URL, { method: 'POST', body });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error?.message || `Signing failed (${res.status})`);
@@ -1378,6 +1475,27 @@
     }
 
     gbName.addEventListener('input', updatePreview);
+
+    // Optional photo: take one now or pick from the camera roll
+    let gbPhoto = null;
+    let gbPhotoUrl = null;
+    const gbPhotoPreview = document.getElementById('gb-photo-preview');
+    const gbPhotoActions = document.getElementById('gb-photo-actions');
+
+    function setGbPhoto(file) {
+      if (gbPhotoUrl) URL.revokeObjectURL(gbPhotoUrl);
+      gbPhoto = file && (!file.type || file.type.startsWith('image/')) ? file : null;
+      gbPhotoUrl = gbPhoto ? URL.createObjectURL(gbPhoto) : null;
+      document.getElementById('gb-photo-img').src = gbPhotoUrl || '';
+      gbPhotoPreview.hidden = !gbPhoto;
+      gbPhotoActions.hidden = !!gbPhoto;
+    }
+
+    ['gb-photo-camera', 'gb-photo-library'].forEach(id => {
+      const input = document.getElementById(id);
+      input.addEventListener('change', () => { setGbPhoto(input.files[0]); input.value = ''; });
+    });
+    document.getElementById('gb-photo-remove').addEventListener('click', () => setGbPhoto(null));
     gbMessage.addEventListener('input', () => { gbCount.textContent = `${gbMessage.value.length} / 280`; });
 
     function openSign() {
@@ -1399,13 +1517,15 @@
       gbStatus.textContent = 'Signing the book…';
       gbStatus.classList.add('is-pulsing');
       try {
-        const json = await signGuestbook(name, message);
+        const json = await signGuestbook(name, message, gbPhoto);
         gbLocal.set(json.public_id, {
           id: json.public_id, name, message,
           at: json.created_at || new Date().toISOString(),
+          photo: gbPhoto ? { id: json.public_id, version: json.version, format: json.format } : null,
           isNew: true
         });
         gbForm.reset();
+        setGbPhoto(null);
         updatePreview();
         gbCount.textContent = '0 / 280';
         gbStatus.textContent = '';
@@ -1453,6 +1573,19 @@
 
     function entryNode(e) {
       const n = make('div', 'entry');
+      if (e.photo) {
+        const fig = make('figure', 'polaroid');
+        // a gentle, stable tilt per photo so the pages feel hand-assembled
+        const tilt = [...e.id].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 2 ? 2 : -2;
+        fig.style.setProperty('--tilt', `${tilt}deg`);
+        const img = make('img');
+        img.src = imageUrl({ public_id: e.photo.id, version: e.photo.version, format: e.photo.format },
+                           'c_fill,g_auto,w_500,h_500,q_auto,f_auto');
+        img.alt = `Photo from ${e.name}`;
+        img.decoding = 'async';
+        fig.appendChild(img);
+        n.appendChild(fig);
+      }
       n.appendChild(make('p', 'entry__message', e.message));
       n.appendChild(make('p', 'entry__name', e.name));
       if (e.isNew) n.classList.add('is-new');

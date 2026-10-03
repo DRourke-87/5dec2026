@@ -7,13 +7,18 @@ site's guestbook.
 | --- | --- |
 | `guestbook-interior.pdf` | Title page, thank-you page, the signatures (numbered pages), "With love" closing page |
 | `guestbook-cover.pdf` | Front cover on its own (most printers take the cover as a separate file) |
-| `guestbook.json` / `guestbook.csv` | A backup of every name, message and time signed |
+| `guestbook.json` / `guestbook.csv` | A backup of every name, message, time signed and photo link |
+| `photos/` | Every guest's photo at full size, numbered in book order with the guest's name |
+
+Signatures with a photo are laid out as a polaroid beside the message, alternating sides.
+Photos are black and white by default to match the book; choose `colour` to keep them in colour.
 
 ## Easiest: run it on GitHub
 
 1. Open the repo's **Actions** tab → **Export guestbook** → **Run workflow**.
 2. Pick a size (`a5`, `a4`, `8x10in`, `8x8in`, `210sq`, or your printer's size such as `150x200mm`),
-   the bleed your printer asks for (usually `3`; `0` to print at home), and white or cream pages.
+   the bleed your printer asks for (usually `3`; `0` to print at home), white or cream pages,
+   and black-and-white or colour photos.
 3. When the run finishes (about 2 minutes), download the zip from the bottom of the run page.
 
 ## On your own computer
@@ -25,7 +30,7 @@ npx playwright install chromium
 node export.mjs --size a5 --bleed 3 --paper white
 ```
 
-Other options: `--order newest`, `--multiple 4` (pad the page count for printers that need it),
+Other options: `--photos colour`, `--order newest`, `--multiple 4` (pad the page count for printers that need it),
 `--input guestbook.json` (rebuild from a saved backup, no Cloudinary needed), `--out folder`.
 
 ## Notes for the printer
