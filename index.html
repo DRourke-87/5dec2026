@@ -109,9 +109,15 @@
       margin-top: 56px;
     }
 
+    /* Shared by the upload and guestbook tiles: same height, content centred */
     .upload__card {
       position: relative;
-      padding: 44px 28px 34px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+      padding: 44px 28px;
       border: 1px solid var(--line);
       text-align: center;
       transition: border-color 0.4s ease;
@@ -191,6 +197,15 @@
       font-style: italic;
       font-size: 0.88rem;
       color: var(--muted);
+    }
+
+    /* Upload progress sits in the tile's bottom margin so it never changes the tile's height */
+    .upload__card > .upload__status {
+      position: absolute;
+      left: 28px;
+      right: 28px;
+      bottom: 16px;
+      margin: 0;
     }
 
     .upload__status.is-pulsing { animation: breathe 1.8s ease-in-out infinite; }
